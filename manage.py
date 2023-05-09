@@ -2,10 +2,14 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-
+import dotenv
+import pathlib
 
 def main():
     """Run administrative tasks."""
+    env_path = pathlib.Path() / ".env"
+    print("env", env_path)
+    dotenv.read_dotenv()
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Cartify_Shopping.settings')
     try:
         from django.core.management import execute_from_command_line

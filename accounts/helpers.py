@@ -1,10 +1,10 @@
 from django.conf import settings
 from twilio.rest import Client
 from django.core.mail import send_mail
-from decouple import config
+import os
 
-account_sid = config('account_sid')
-auth_token = config('auth_token')
+account_sid = os.environ.get('account_sid')
+auth_token = os.environ.get('auth_token')
 
 class Message_Handler:
     mobile=None
