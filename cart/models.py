@@ -107,7 +107,7 @@ class Order(BaseModel):
                 self.shipping_address=address
         super().save(*args,**kwargs)
     def set_defaultaddress(self):
-        if Address.objects.all():
+        if Address.objects.filter(is_default=True,user=self.customer.user):
             address=Address.objects.get(is_default=True,user=self.customer.user)
             self.shipping_address=address
               
