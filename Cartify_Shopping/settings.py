@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from pathlib import Path
 import os
 from django.conf import settings
-from decouple import config
+
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,11 +25,14 @@ TEMPLATE_DIR= os.path.join(BASE_DIR, 'templates')
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+
 #debug is set to true
+
+DEBUG = bool(os.environ.get('DEBUG', True))
+
 
 ALLOWED_HOSTS = ["*"]
 
@@ -65,12 +68,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-EMAIL_BACKEND = config('EMAIL_BACKEND')
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_PORT = config('EMAIL_PORT', cast=int) 
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND')
+EMAIL_HOST =os.environ.get('EMAIL_HOST')
+EMAIL_USE_TLS = bool(os.environ.get('EMAIL_USE_TLS', True))
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT')) 
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 ROOT_URLCONF = 'Cartify_Shopping.urls'
 
 TEMPLATES = [
@@ -98,9 +102,9 @@ WSGI_APPLICATION = 'Cartify_Shopping.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'Cartifyshopping_database',
-        'USER': 'postgres',
-        'PASSWORD' : config('DATABASE_PASSWORD'),
+        'NAME': os.environ.get('DATABASE_NAME'),
+        'USER': os.environ.get('DATABASE_USER'),
+        'PASSWORD' : os.environ.get('DATABASE_PASSWORD'),
         'HOST' : 'localhost',
         'PORT' : '',
     }
