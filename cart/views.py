@@ -21,6 +21,7 @@ def cartpage(request):
                 coupon_obj=Coupon.objects.get(coupon_code__icontains=coupon)
                 if coupon_obj.is_expired:
                     messages.warning(request,"Coupon expired !!")
+                    
                 else:
                     customer,created=Customer.objects.get_or_create(user=request.user)
                     order, created=Order.objects.get_or_create(customer=customer,complete=False)
