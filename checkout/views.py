@@ -251,13 +251,17 @@ def paymentpage(request):
                 messages.warning(request,"Account Blocked !!")
                 return redirect('/accounts/logout')
             else:
+                address=Address.objects.filter(user=request.user)
+                if not address:
+                    messages.warning(request,"add address to continue !!")
+                    return HttpResponseRedirect(request.META.get('HTTP_REFERER')) 
                 customer=request.user.customer
                 order, created=Order.objects.get_or_create(customer=customer,complete=False)
                 items=order.orderitem_set.all()
                 flag=True      
                 item_count=Wishlist.get_total_WishlistItems()
                 no_items=OrderItem.get_total_orderItems(request.user)
-
+                  
                 available_offers={}
                 for item in items:
                     available_offers[item]=[]

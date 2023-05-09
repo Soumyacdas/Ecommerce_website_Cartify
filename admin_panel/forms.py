@@ -194,6 +194,9 @@ class BrandUpdationForm(forms.ModelForm):
         model = Brand
         fields =['name','offer',    
         ]       
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['offer'].required = False
 
 class ColorUpdationForm(forms.ModelForm):
     name=forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control my-2','placeholder':'Enter Color' }))

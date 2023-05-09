@@ -397,7 +397,6 @@ def add_product(request):
     )
     if request.method == 'POST':
         product_form = ProductUpdateForm(request.POST)
-
         image_form=ProductImageFormSet(request.POST,request.FILES,instance=product_form.instance)
         variant_form=ProductVariantFormSet(request.POST,request.FILES,instance=product_form.instance)
 
@@ -405,8 +404,17 @@ def add_product(request):
             product_form.save()
             image_form.save()
             variant_form.save()
-            
             return redirect('/admin-panel/products')
+        else:
+            context = {'form': product_form, 'form_data': request.POST}
+            context={
+            'form':product_form,
+            'admin':admin,
+            'image_form':image_form,
+            'form_data': request.POST,
+            'variant_form':variant_form,
+            }
+        return render(request,'admin_panel/add_product.html',context)
     else:
         product_form = ProductUpdateForm()
         image_form=ProductImageFormSet(instance=product_form.instance)

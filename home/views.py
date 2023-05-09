@@ -70,12 +70,13 @@ def customer_account(request):
                 return redirect('/accounts/logout')
             else:
                 user=request.user
-                customer=Customer.objects.get(user=user)
+                customer,created=Customer.objects.get_or_create(user=user)
                 flag=True
+                orders_list=[]
+                address=[]
                 no_items=OrderItem.get_total_orderItems(request.user)
                 item_count=Wishlist.get_total_WishlistItems()
-
-                if Address.objects.get(user=request.user,is_default=True):
+                if Address.objects.filter(user=request.user,is_default=True):
                     address=Address.objects.get(user=request.user,is_default=True)
                 if Order.objects.filter(customer=customer,complete=True):
                     orders_list=Order.objects.filter(customer=customer,complete=True).order_by('-date_ordered')
@@ -128,8 +129,9 @@ def personal_info(request):
                 flag=True
                 no_items=OrderItem.get_total_orderItems(request.user)
                 item_count=Wishlist.get_total_WishlistItems()
-
-                if Address.objects.get(user=request.user,is_default=True):
+                address=[]
+                orders=[]
+                if Address.objects.filter(user=request.user,is_default=True):
                     address=Address.objects.get(user=request.user,is_default=True)
                 if Order.objects.filter(customer=customer,complete=True):
                     orders=Order.objects.filter(customer=customer,complete=True)
@@ -160,7 +162,10 @@ def personal_info(request):
                         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
                 else:
                     profile_form = profileUpdate(instance=user)
-                    address_form=PersonAddress(instance=address)
+                    if address:
+                        address_form=PersonAddress(instance=address)
+                    else:
+                        address_form=PersonAddress()
                     context['profile_form']=profile_form
                     context['address_form']=address_form
                 return render(request,'accounts/personal_info.html',context)
@@ -185,8 +190,9 @@ def view_addressbook(request):
                 flag=True
                 no_items=OrderItem.get_total_orderItems(request.user)
                 item_count=Wishlist.get_total_WishlistItems()
-
-                if Address.objects.get(user=request.user,is_default=True):
+                address=[]
+                orders=[]
+                if Address.objects.filter(user=request.user,is_default=True):
                     address=Address.objects.get(user=request.user,is_default=True)
                 address_book=Address.objects.filter(user=request.user)
                 if Order.objects.filter(customer=customer,complete=True):
