@@ -45,7 +45,7 @@ def products_details(request, slug):
                 'section_slug': product.section.first().slug, 
                 
                 }
-        reviews_on_product=Review.objects.filter(product=product)
+        reviews_on_product=Review.objects.filter(product=product).order_by('-added_at')
         reviews_count=Review.objects.filter(product=product).count()
         if  request.user.is_authenticated: 
             review_by_user=Review.objects.filter(product=product,user=request.user)
@@ -55,7 +55,7 @@ def products_details(request, slug):
         context['reviews_on_product']=reviews_on_product
         context['reviews_count']=reviews_count
         context['itrator']=range(1,6)
-        avarage_rating = Review.get_average_rating(product)
+        avarage_rating = round(Review.get_average_rating(product), 1)
         context['avarage_rating']=avarage_rating
         if request.method == 'POST':
             form = ReviewForm(request.POST)
@@ -200,7 +200,7 @@ def group_view(request,slug):
         context['item_count']=item_count
         avarage_rating={}
         for product in products:
-            avarage_rating[product.uid] = Review.get_average_rating(product)
+            avarage_rating[product.uid] = round(Review.get_average_rating(product), 1)
         context['avarage_rating']=avarage_rating
         return render(request, 'products/product_shop.html',context)
         
@@ -325,7 +325,7 @@ def cateogory_view(request,name):
         context['slug']=name
         avarage_rating={}
         for product in products:
-            avarage_rating[product.uid] = Review.get_average_rating(product)
+            avarage_rating[product.uid] = round(Review.get_average_rating(product), 1)
         context['avarage_rating']=avarage_rating
 
         return render(request, 'products/categories_shop.html',context)
@@ -406,7 +406,7 @@ def shop(request):
         context['item_count']=item_count
         avarage_rating={}
         for product in products:
-            avarage_rating[product.uid] = Review.get_average_rating(product)
+            avarage_rating[product.uid] = round(Review.get_average_rating(product), 1)
         context['avarage_rating']=avarage_rating
         return render(request, 'products/product_shop.html',context)
         
@@ -457,7 +457,7 @@ def filter_data(request):
         allProducts=allProducts.filter(product_variant__by_age__uid__in=ages).distinct()
     avarage_rating={}
     for product in allProducts:
-        avarage_rating[product.uid] = Review.get_average_rating(product)
+        avarage_rating[product.uid] = round(Review.get_average_rating(product), 1)
     t=render_to_string('base/product_list.html',{'data':allProducts,'avarage_rating':avarage_rating})
     
     return JsonResponse({'data':t})
@@ -493,7 +493,7 @@ def sort_data(request):
     
     avarage_rating={}
     for product in allProducts:
-        avarage_rating[product.uid] = Review.get_average_rating(product)
+        avarage_rating[product.uid] = round(Review.get_average_rating(product), 1)
     
     
     t=render_to_string('base/product_list.html',{'data':allProducts,'avarage_rating':avarage_rating})

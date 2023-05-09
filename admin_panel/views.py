@@ -49,12 +49,14 @@ def adminpage(request):
         orders=Order.objects.filter(complete=True)
         total_products=Products.objects.filter(status=1).count()
         total_registrations=User.objects.filter(is_superuser=False).count()
+        income_orders=orders.exclude(status__in=['returned', 'canceled', 'refunded'])
         
         
         for order in orders:
-            total_income+=order.get_grand_total
             total_orders+=1
-        
+        for order in income_orders:
+            total_income+=order.get_grand_total
+        total_income=round(total_income,2)
         today = timezone.localtime().now()
         this_week = today - datetime.timedelta(days=7)
     
@@ -167,7 +169,7 @@ def adminpage(request):
         daily_orders = Order.objects.filter(
         date_ordered__range=[this_week, today],
         complete=True
-        )
+        ).exclude(status__in=['returned','refunded','canceled'])
         daily_income={}
         for order in daily_orders:
             ordered_date=order.date_ordered.date()
@@ -180,7 +182,7 @@ def adminpage(request):
         monthly_orders = Order.objects.filter(
             date_ordered__range=[this_month, today],
             complete=True
-        )
+        ).exclude(status__in=['returned','refunded','canceled'])
         monthly_income = {f"Week {i+1}": 0 for i in range(num_weeks)}
         for order in monthly_orders:
             ordered_date = order.date_ordered.date()
@@ -190,7 +192,7 @@ def adminpage(request):
         yearly_orders = Order.objects.filter(
             date_ordered__range=[this_year, today],
             complete=True
-        )
+        ).exclude(status__in=['returned','refunded','canceled'])
         yearly_income = {months[i]: 0 for i in range(1, 13)}
         for order in yearly_orders:
             ordered_date = order.date_ordered.date()
@@ -1082,7 +1084,8 @@ def sales_report(request):
     total_orders=orders_list.count()
     net_income=0
     net_cart=0
-    for order in orders_list:
+    income_orderlist=orders_list.exclude(status__in=['returned', 'canceled', 'refunded'])
+    for order in income_orderlist:
         net_cart+=order.get_original_cart_total
         net_income+=order.get_grand_total
     net_discount=net_cart-net_income

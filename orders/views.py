@@ -161,8 +161,8 @@ def return_order(request,uid):
         context['no_items']=cookieData['no_items']
     if Order.objects.get(customer=customer,complete=True,uid=uid):
         order=Order.objects.get(customer=customer,complete=True,uid=uid)
-        if order.status != 'return':
-            order.status='return'
+        if order.status != 'returned':
+            order.status='returned'
             now = timezone.localtime().now()
             order.returned_date=now
             items=order.orderitem_set.all()

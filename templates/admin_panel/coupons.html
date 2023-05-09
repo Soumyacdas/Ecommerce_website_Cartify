@@ -65,7 +65,7 @@ input[type="number"] {
 	<div class="h5 pd-20 mb-0"></div>
   <div class="header-search m-2 input-group">
     <form method="get">
-        <div style="width: 200%;" class="form-group mb-0 mt-2 input-group-prepend ">
+        <div style="width: 200%;padding-left:15px" class="form-group mb-0 mt-2 input-group-prepend ">
             <input
                 type="search"
                 required
@@ -78,7 +78,8 @@ input[type="number"] {
         </div>
     </form>
 </div>
-	<table class="table-striped table nowrap">
+<div class="table-responsive">
+	<table style="width:95%;margin:25px" class="table-striped table nowrap">
 		<thead>
            <h4 class='text-center'> Coupons<h4>
 			<tr>
@@ -124,8 +125,8 @@ input[type="number"] {
                           
                         {% endfor%}	
 		</tbody>
-	</table>
-    <div class="p-2 float-right">
+	</table></div>
+    <div style="margin:40px" class="p-2 float-right">
         <button id="addbtn" type="button" class="btn btn-primary" style="margin:10px;">
             Add New Coupon
         </button>

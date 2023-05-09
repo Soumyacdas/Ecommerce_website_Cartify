@@ -101,6 +101,9 @@ class CategoryUpdateForm(forms.ModelForm):
         widgets = {
             'img': forms.ClearableFileInput(attrs={'multiple': True},),
         }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['offer'].required = False
 
 class AddCoupon(forms.ModelForm):
     coupon_code=forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control my-2','placeholder':'Enter coupon code' }))

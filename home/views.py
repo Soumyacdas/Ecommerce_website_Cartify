@@ -56,7 +56,7 @@ def Homepage(request):
         }
     avarage_rating={}
     for product in products:
-        avarage_rating[product.uid] = Review.get_average_rating(product)
+        avarage_rating[product.uid] = round(Review.get_average_rating(product), 1)
     context['avarage_rating']=avarage_rating
     return render(request,'home/index.html',context)
     

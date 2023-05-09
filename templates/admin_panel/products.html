@@ -6,7 +6,7 @@
 <div class="card-box pb-10">
   <div class="header-search m-2 input-group">
     <form method="get">
-        <div style="width: 200%;" class="form-group mb-0 mt-2 input-group-prepend ">
+        <div style="width: 200%;margin: 16px;padding-top: 16px;" class="form-group mb-0 mt-2 input-group-prepend ">
             <input
                 type="search"
                 required
@@ -20,7 +20,8 @@
     </form>
 </div>
 	<div class="h5 pd-20 mb-0">Products List</div>
-	<table class="table-striped table nowrap">
+    <div class="table-responsive">
+	<table style="margin:15px;" class=" table-striped table nowrap">
 		<thead>
 			<tr>
                 
@@ -33,7 +34,6 @@
                     <th scope="col">Category</th>
                     <th scope="col">Original Price</th>
                     <th scope="col">Selling Price</th>
-                    <th scope="col">Quantity</th>
                     <th scope="col">Tags</th>
                     <th scope="col">Status</th>
                     
@@ -50,13 +50,12 @@
             <th>{{forloop.counter}}</th>
             
             <th >{{i.name}}</th>
-            <th ><img src="/media/{{i.product_images.first.img}}"></th>
+            <th ><img style="width:100px;" src="/media/{{i.product_images.first.img}}"></th>
             <td>{{i.brand.first.name}}</td>
             <td>{{i.section.first.name}}'s Fashion</td>
             <td>{{i.category}}</td>
             <td>{{i.original_price}}</td>
             <td>{{i.selling_price}}</td>
-            <td>{{i.quantity}}</td>
             <td>{{i.tag_product.first}}</td>
             <td>{% if i.status %}<p style="color:green">Active</p>{% else %}<p style="color: red;">block</p>{% endif %}</td>
             <td><a href="{% url 'product_update' i.uid %}" class="btn text secondary px-0 " data-toggle="tooltip" title="Edit">
@@ -86,6 +85,7 @@
 				
 		</tbody>
 	</table>
+</div>
 </div>
 </div>
 {% if products.has_other_pages %}
