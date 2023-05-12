@@ -26,8 +26,6 @@ def checkout(request):
                 return redirect('/accounts/logout')
             else:
                 customer=request.user.customer
-                customer.name=request.user.first_name
-                customer.save()
                 flag=True
                 try:
                     order=Order.objects.get(customer=customer,complete=False)
