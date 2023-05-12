@@ -127,7 +127,7 @@ class OrderItem(BaseModel):
     def get_price(self):
         price=self.product.selling_price+self.product_variant.extra_price
         if self.offer:
-            price=price*(1-(self.offer.discount/100))
+            price=round(price*(1-(self.offer.discount/100)),2)
         return price
     @property
     def get_orginal_price(self):
@@ -138,7 +138,7 @@ class OrderItem(BaseModel):
         price=self.product.selling_price+self.product_variant.extra_price
         discount=0
         if self.offer:
-            discount=price*((self.offer.discount/100))
+            discount=round(price*((self.offer.discount/100)),2)
         return discount
     @property
     def get_total(self):
