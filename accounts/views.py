@@ -37,7 +37,12 @@ def login_page(request):
     
     if request.method=='POST':
         email=request.POST.get('email')
-        mobile='+91'+request.POST.get('mobile')
+        mobile_no=(request.POST.get('mobile'))
+        if mobile_no.isdigit():
+            mobile='+91'+request.POST.get('mobile')
+        else:
+            messages.warning(request,"mobile number not valid !!")
+            return redirect(request.META.get('HTTP_REFERER'))
         print('this is my mobile number:',mobile)
         password=request.POST.get('password')
         user=authenticate(request,email=email,password=password)
@@ -54,7 +59,6 @@ def login_page(request):
             
         else:
             messages.warning(request,"Incorrect Credentials !!")
-            
    
     form = signinuserForm()        
     try:
