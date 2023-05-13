@@ -18,6 +18,7 @@ from django.db.models import Count
 from django.core.paginator import Paginator
 from django.db.models import Q
 
+
 # Create your views here.
 # _________________________________________________admin_____________________________________________
 @never_cache
@@ -293,39 +294,45 @@ def adminlogout(request):
 # _________________________________________________customer_____________________________________________
 
 def Customer_delete(request,id):
-    
-    User.objects.get(id=id).delete()
-    messages.success(request,"User Deleted !!")
-    return redirect('/admin-panel/customers')
+    if request.user.is_authenticated and request.user.is_superuser:
+        User.objects.get(id=id).delete()
+        messages.success(request,"User Deleted !!")
+        return redirect('/admin-panel/customers')
+    else:
+        return redirect('/admin-panel/login')
         
 def customer_update(request,id):
-    user=User.objects.get(id=id)
-    admin=User.objects.get(is_superuser=True)
-    if request.method == 'POST':
-        form = CustomUpdateForm(request.POST, instance=user)
-        
-        if form.is_valid():
-            form.save()
+    if user.is_authenticated and request.user.is_superuser:
+        user=User.objects.get(id=id)
+        admin=User.objects.get(is_superuser=True)
+        if request.method == 'POST':
+            form = CustomUpdateForm(request.POST, instance=user)
             
-            return redirect('/admin-panel/customers')
+            if form.is_valid():
+                form.save()
+                
+                return redirect('/admin-panel/customers')
+        else:
+            form = CustomUpdateForm(instance=user) 
+        return render(request,'admin_panel/customer_update.html',{'form':form,'admin':admin})
     else:
-        form = CustomUpdateForm(instance=user) 
-
-    
-    return render(request,'admin_panel/customer_update.html',{'form':form,'admin':admin})
+        return redirect('/admin-panel/login')
 
 def add_customer(request):
-    admin=User.objects.get(is_superuser=True)
-    if request.method == 'POST':
-        form = CustomUserForm(request.POST)
-        
-        if form.is_valid():
-            form.save()
+    if request.user.is_authenticated and request.user.is_superuser:
+        admin=User.objects.get(is_superuser=True)
+        if request.method == 'POST':
+            form = CustomUserForm(request.POST)
             
-            return redirect('/admin-panel/customers')
+            if form.is_valid():
+                form.save()
+                
+                return redirect('/admin-panel/customers')
+        else:
+            form = CustomUserForm()
+        return render(request,'admin_panel/add_customer.html',{'form':form,'admin':admin})
     else:
-        form = CustomUserForm()
-    return render(request,'admin_panel/add_customer.html',{'form':form,'admin':admin})
+        return redirect('/admin-panel/login')
 # _________________________________________________product__________________________________________
 def product_details(request):
     if request.user.is_authenticated and request.user.is_superuser:
@@ -355,79 +362,86 @@ def product_details(request):
         return redirect('/admin-panel/login')
 
 def product_delete(request,uid):
-    Products.objects.get(uid=uid).delete()
-    messages.success(request,"Product Deleted !!")
-    return redirect('/admin-panel/products')
-
-def product_update(request,uid):
-    products=Products.objects.get(uid=uid)
-    admin=User.objects.get(is_superuser=True)
-
-    if request.method == 'POST':
-        product_form = ProductUpdateForm(request.POST, instance=products)
-        image_form=ProductImageFormSet(request.POST, request.FILES,instance=product_form.instance)
-        variant_form=ProductVariantFormSet(request.POST,request.FILES,instance=product_form.instance)
-        
-        if product_form.is_valid() and image_form.is_valid() and variant_form.is_valid():
-            product_form.save()
-            image_form.save()
-            variant_form.save()
-            return redirect('/admin-panel/products')
-        
-        return HttpResponse('form is not valid')
+    if request.user.is_authenticated and request.user.is_superuser:
+        Products.objects.get(uid=uid).delete()
+        messages.success(request,"Product Deleted !!")
+        return redirect('/admin-panel/products')
     else:
-        product_form = ProductUpdateForm(instance=products)
-        image_form=ProductImageFormSet(instance=products)
-        variant_form=ProductVariantFormSet(instance=products)
-        context={
-            'form':product_form,
-            'admin':admin,
-            'image_form':image_form,
-            'variant_form':variant_form,
-            }
-    
-        return render(request,'admin_panel/product_update.html',context)
+        return redirect('/admin-panel/login')
+def product_update(request,uid):
+    if request.user.is_authenticated and request.user.is_superuser:
+        products=Products.objects.get(uid=uid)
+        admin=User.objects.get(is_superuser=True)
 
-def add_product(request):
-    admin=User.objects.get(is_superuser=True)
-    # ProductUpdateformset = inlineformset_factory(Products, ProductImage, form=ProductImageForm, extra=4, can_delete=True)
-    ProductVariantFormSet = inlineformset_factory(
-        Products, ProductVariant, form=ProductVariantForm, extra=4, can_delete=True
-    )
-    ProductImageFormSet = inlineformset_factory(
-        Products, ProductImage, form=ProductImageForm, extra=4, can_delete=True
-    )
-    if request.method == 'POST':
-        product_form = ProductUpdateForm(request.POST)
-        image_form=ProductImageFormSet(request.POST,request.FILES,instance=product_form.instance)
-        variant_form=ProductVariantFormSet(request.POST,request.FILES,instance=product_form.instance)
-
-        if product_form.is_valid() and image_form.is_valid() and variant_form.is_valid():
-            product_form.save()
-            image_form.save()
-            variant_form.save()
-            return redirect('/admin-panel/products')
+        if request.method == 'POST':
+            product_form = ProductUpdateForm(request.POST, instance=products)
+            image_form=ProductImageFormSet(request.POST, request.FILES,instance=product_form.instance)
+            variant_form=ProductVariantFormSet(request.POST,request.FILES,instance=product_form.instance)
+            
+            if product_form.is_valid() and image_form.is_valid() and variant_form.is_valid():
+                product_form.save()
+                image_form.save()
+                variant_form.save()
+                return redirect('/admin-panel/products')
+            
+            return HttpResponse('form is not valid')
         else:
-            context = {'form': product_form, 'form_data': request.POST}
+            product_form = ProductUpdateForm(instance=products)
+            image_form=ProductImageFormSet(instance=products)
+            variant_form=ProductVariantFormSet(instance=products)
             context={
-            'form':product_form,
-            'admin':admin,
-            'image_form':image_form,
-            'form_data': request.POST,
-            'variant_form':variant_form,
-            }
+                'form':product_form,
+                'admin':admin,
+                'image_form':image_form,
+                'variant_form':variant_form,
+                }
+        
+            return render(request,'admin_panel/product_update.html',context)
+    else:
+        return redirect('/admin-panel/login')
+def add_product(request):
+    if request.user.is_authenticated and request.user.is_superuser:
+        admin=User.objects.get(is_superuser=True)
+        # ProductUpdateformset = inlineformset_factory(Products, ProductImage, form=ProductImageForm, extra=4, can_delete=True)
+        ProductVariantFormSet = inlineformset_factory(
+            Products, ProductVariant, form=ProductVariantForm, extra=4, can_delete=True
+        )
+        ProductImageFormSet = inlineformset_factory(
+            Products, ProductImage, form=ProductImageForm, extra=4, can_delete=True
+        )
+        if request.method == 'POST':
+            product_form = ProductUpdateForm(request.POST)
+            image_form=ProductImageFormSet(request.POST,request.FILES,instance=product_form.instance)
+            variant_form=ProductVariantFormSet(request.POST,request.FILES,instance=product_form.instance)
+
+            if product_form.is_valid() and image_form.is_valid() and variant_form.is_valid():
+                product_form.save()
+                image_form.save()
+                variant_form.save()
+                return redirect('/admin-panel/products')
+            else:
+                context = {'form': product_form, 'form_data': request.POST}
+                context={
+                'form':product_form,
+                'admin':admin,
+                'image_form':image_form,
+                'form_data': request.POST,
+                'variant_form':variant_form,
+                }
+            return render(request,'admin_panel/add_product.html',context)
+        else:
+            product_form = ProductUpdateForm()
+            image_form=ProductImageFormSet(instance=product_form.instance)
+            variant_form=ProductVariantFormSet(instance=product_form.instance)
+            context={
+                'form':product_form,
+                'admin':admin,
+                'image_form':image_form,
+                'variant_form':variant_form,
+                }
         return render(request,'admin_panel/add_product.html',context)
     else:
-        product_form = ProductUpdateForm()
-        image_form=ProductImageFormSet(instance=product_form.instance)
-        variant_form=ProductVariantFormSet(instance=product_form.instance)
-        context={
-            'form':product_form,
-            'admin':admin,
-            'image_form':image_form,
-            'variant_form':variant_form,
-            }
-    return render(request,'admin_panel/add_product.html',context)
+        return redirect('/admin-panel/login')
 
 # -------------------------------------------------variant------------------------------------------------
 def variant_details(request):
@@ -452,200 +466,235 @@ def variant_details(request):
         return redirect('/admin-panel/login')
 # _________________________________________brands_______________________________________________
 def add_brands(request):
-    admin=User.objects.get(is_superuser=True)
-    if request.method == 'POST':
-        form = BrandUpdationForm(request.POST,request.FILES)
-        if form.is_valid() :
-            form.save()    
-            return redirect('/admin-panel/variants')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        admin=User.objects.get(is_superuser=True)
+        if request.method == 'POST':
+            form = BrandUpdationForm(request.POST,request.FILES)
+            if form.is_valid() :
+                form.save()    
+                return redirect('/admin-panel/variants')
+            else:
+                print('form not valid')
         else:
-            print('form not valid')
-    else:
-        form = BrandUpdationForm()
-    context= {
-            'form':form,
-            'admin':admin, 
-            }
-    return render(request,'admin_panel/add_brand.html',context)
-
-def brand_update(request,uid):
-    brand=Brand.objects.get(uid=uid)
-    admin=User.objects.get(is_superuser=True)
-
-    if request.method == 'POST':
-        form = BrandUpdationForm(request.POST, request.FILES, instance=brand)
-        if form.is_valid():
-            form.save()
-            return redirect('/admin-panel/variants')
-    else:
-        form = BrandUpdationForm(instance=brand)
-        context={
-            'form':form,
-            'admin':admin,
-            }
+            form = BrandUpdationForm()
+        context= {
+                'form':form,
+                'admin':admin, 
+                }
         return render(request,'admin_panel/add_brand.html',context)
+    else:
+        return redirect('/admin-panel/login')
+def brand_update(request,uid):
+    if request.user.is_authenticated and  request.user.is_superuser:
+        brand=Brand.objects.get(uid=uid)
+        admin=User.objects.get(is_superuser=True)
 
+        if request.method == 'POST':
+            form = BrandUpdationForm(request.POST, request.FILES, instance=brand)
+            if form.is_valid():
+                form.save()
+                return redirect('/admin-panel/variants')
+        else:
+            form = BrandUpdationForm(instance=brand)
+            context={
+                'form':form,
+                'admin':admin,
+                }
+            return render(request,'admin_panel/add_brand.html',context)
+    else:
+        return redirect('/admin-panel/login')
 def brand_delete(request,uid):
-    Brand.objects.get(uid=uid).delete()
-    messages.success(request,"brand Deleted !!")
-    return redirect('/admin-panel/variants')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        Brand.objects.get(uid=uid).delete()
+        messages.success(request,"brand Deleted !!")
+        return redirect('/admin-panel/variants')
+    else:
+        return redirect('/admin-panel/login')
 # _________________________________________Colors_______________________________________________
 def add_color(request):
-    admin=User.objects.get(is_superuser=True)
-    if request.method == 'POST':
-        form = ColorUpdationForm(request.POST,request.FILES)
-        if form.is_valid() :
-            form.save()    
-            return redirect('/admin-panel/variants')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        admin=User.objects.get(is_superuser=True)
+        if request.method == 'POST':
+            form = ColorUpdationForm(request.POST,request.FILES)
+            if form.is_valid() :
+                form.save()    
+                return redirect('/admin-panel/variants')
+            else:
+                print('form not valid')
         else:
-            print('form not valid')
-    else:
-        form = ColorUpdationForm()
-    context= {
-            'form':form,
-            'admin':admin, 
-            }
-    return render(request,'admin_panel/add_color.html',context)
-
-def color_update(request,uid):
-    color=Color.objects.get(uid=uid)
-    admin=User.objects.get(is_superuser=True)
-
-    if request.method == 'POST':
-        form = ColorUpdationForm(request.POST, request.FILES, instance=color)
-        if form.is_valid():
-            form.save()
-            return redirect('/admin-panel/variants')
-    else:
-        form = ColorUpdationForm(instance=color)
-        context={
-            'form':form,
-            'admin':admin,
-            }
+            form = ColorUpdationForm()
+        context= {
+                'form':form,
+                'admin':admin, 
+                }
         return render(request,'admin_panel/add_color.html',context)
+    else:
+        return redirect('/admin-panel/login')
+def color_update(request,uid):
+    if request.user.is_authenticated and  request.user.is_superuser:
+        color=Color.objects.get(uid=uid)
+        admin=User.objects.get(is_superuser=True)
 
+        if request.method == 'POST':
+            form = ColorUpdationForm(request.POST, request.FILES, instance=color)
+            if form.is_valid():
+                form.save()
+                return redirect('/admin-panel/variants')
+        else:
+            form = ColorUpdationForm(instance=color)
+            context={
+                'form':form,
+                'admin':admin,
+                }
+            return render(request,'admin_panel/add_color.html',context)
+    else:
+        return redirect('/admin-panel/login')
 def color_delete(request,uid):
-    Color.objects.get(uid=uid).delete()
-    messages.success(request,"color Deleted !!")
-    return redirect('/admin-panel/variants')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        Color.objects.get(uid=uid).delete()
+        messages.success(request,"color Deleted !!")
+        return redirect('/admin-panel/variants')
+    else:
+        return redirect('/admin-panel/login')
 # _________________________________________Sizes_______________________________________________
 def add_size(request):
-    admin=User.objects.get(is_superuser=True)
-    if request.method == 'POST':
-        form = SizeUpdationForm(request.POST,request.FILES)
-        if form.is_valid() :
-            form.save()    
-            return redirect('/admin-panel/variants')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        admin=User.objects.get(is_superuser=True)
+        if request.method == 'POST':
+            form = SizeUpdationForm(request.POST,request.FILES)
+            if form.is_valid() :
+                form.save()    
+                return redirect('/admin-panel/variants')
+            else:
+                print('form not valid')
         else:
-            print('form not valid')
-    else:
-        form = SizeUpdationForm()
-    context= {
-            'form':form,
-            'admin':admin, 
-            }
-    return render(request,'admin_panel/add_size.html',context)
-
-def size_update(request,uid):
-    size=Size.objects.get(uid=uid)
-    admin=User.objects.get(is_superuser=True)
-
-    if request.method == 'POST':
-        form = SizeUpdationForm(request.POST, request.FILES, instance=size)
-        if form.is_valid():
-            form.save()
-            return redirect('/admin-panel/variants')
-    else:
-        form = SizeUpdationForm(instance=size)
-        context={
-            'form':form,
-            'admin':admin,
-            }
+            form = SizeUpdationForm()
+        context= {
+                'form':form,
+                'admin':admin, 
+                }
         return render(request,'admin_panel/add_size.html',context)
+    else:
+        return redirect('/admin-panel/login')
+def size_update(request,uid):
+    if request.user.is_authenticated and  request.user.is_superuser:
+        size=Size.objects.get(uid=uid)
+        admin=User.objects.get(is_superuser=True)
+
+        if request.method == 'POST':
+            form = SizeUpdationForm(request.POST, request.FILES, instance=size)
+            if form.is_valid():
+                form.save()
+                return redirect('/admin-panel/variants')
+        else:
+            form = SizeUpdationForm(instance=size)
+            context={
+                'form':form,
+                'admin':admin,
+                }
+            return render(request,'admin_panel/add_size.html',context)
+    else:
+        return redirect('/admin-panel/login')   
 
 def size_delete(request,uid):
-    Size.objects.get(uid=uid).delete()
-    messages.success(request,"size Deleted !!")
-    return redirect('/admin-panel/variants')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        Size.objects.get(uid=uid).delete()
+        messages.success(request,"size Deleted !!")
+        return redirect('/admin-panel/variants')
+    else:
+        return redirect('/admin-panel/login')
 # _________________________________________by_age_______________________________________________
 def add_age(request):
-    admin=User.objects.get(is_superuser=True)
-    if request.method == 'POST':
-        form = AgeUpdationForm(request.POST,request.FILES)
-        if form.is_valid() :
-            form.save()    
-            return redirect('/admin-panel/variants')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        admin=User.objects.get(is_superuser=True)
+        if request.method == 'POST':
+            form = AgeUpdationForm(request.POST,request.FILES)
+            if form.is_valid() :
+                form.save()    
+                return redirect('/admin-panel/variants')
+            else:
+                print('form not valid')
         else:
-            print('form not valid')
-    else:
-        form = AgeUpdationForm()
-    context= {
-            'form':form,
-            'admin':admin, 
-            }
-    return render(request,'admin_panel/add_age.html',context)
-
-def age_update(request,uid):
-    by_age=By_Age.objects.get(uid=uid)
-    admin=User.objects.get(is_superuser=True)
-
-    if request.method == 'POST':
-        form = AgeUpdationForm(request.POST, request.FILES, instance=by_age)
-        if form.is_valid():
-            form.save()
-            return redirect('/admin-panel/variants')
-    else:
-        form = AgeUpdationForm(instance=by_age)
-        context={
-            'form':form,
-            'admin':admin,
-            }
+            form = AgeUpdationForm()
+        context= {
+                'form':form,
+                'admin':admin, 
+                }
         return render(request,'admin_panel/add_age.html',context)
+    else:
+        return redirect('/admin-panel/login')
+def age_update(request,uid):
+    if request.user.is_authenticated and  request.user.is_superuser:
+        by_age=By_Age.objects.get(uid=uid)
+        admin=User.objects.get(is_superuser=True)
 
+        if request.method == 'POST':
+            form = AgeUpdationForm(request.POST, request.FILES, instance=by_age)
+            if form.is_valid():
+                form.save()
+                return redirect('/admin-panel/variants')
+        else:
+            form = AgeUpdationForm(instance=by_age)
+            context={
+                'form':form,
+                'admin':admin,
+                }
+            return render(request,'admin_panel/add_age.html',context)
+    else:
+        return redirect('/admin-panel/login')
 def age_delete(request,uid):
-    By_Age.objects.get(uid=uid).delete()
-    messages.success(request,"Age variant Deleted !!")
-    return redirect('/admin-panel/variants')
-# 
+    if request.user.is_authenticated and  request.user.is_superuser:
+        By_Age.objects.get(uid=uid).delete()
+        messages.success(request,"Age variant Deleted !!")
+        return redirect('/admin-panel/variants')
+    else:
+        return redirect('/admin-panel/login')
 # _________________________________________tag_______________________________________________
 def add_tag(request):
-    admin=User.objects.get(is_superuser=True)
-    if request.method == 'POST':
-        form = TagUpdationForm(request.POST,request.FILES)
-        if form.is_valid() :
-            form.save()    
-            return redirect('/admin-panel/variants')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        admin=User.objects.get(is_superuser=True)
+        if request.method == 'POST':
+            form = TagUpdationForm(request.POST,request.FILES)
+            if form.is_valid() :
+                form.save()    
+                return redirect('/admin-panel/variants')
+            else:
+                print('form not valid')
         else:
-            print('form not valid')
-    else:
-        form = TagUpdationForm()
-    context= {
-            'form':form,
-            'admin':admin, 
-            }
-    return render(request,'admin_panel/add_tag.html',context)
-
-def tag_update(request,uid):
-    tag=Tags.objects.get(uid=uid)
-    admin=User.objects.get(is_superuser=True)
-
-    if request.method == 'POST':
-        form = TagUpdationForm(request.POST, request.FILES, instance=tag)
-        if form.is_valid():
-            form.save()
-            return redirect('/admin-panel/variants')
-    else:
-        form = TagUpdationForm(instance=tag)
-        context={
-            'form':form,
-            'admin':admin,
-            }
+            form = TagUpdationForm()
+        context= {
+                'form':form,
+                'admin':admin, 
+                }
         return render(request,'admin_panel/add_tag.html',context)
+    else:
+        return redirect('/admin-panel/login')
+def tag_update(request,uid):
+    if request.user.is_authenticated and  request.user.is_superuser:
+        tag=Tags.objects.get(uid=uid)
+        admin=User.objects.get(is_superuser=True)
 
+        if request.method == 'POST':
+            form = TagUpdationForm(request.POST, request.FILES, instance=tag)
+            if form.is_valid():
+                form.save()
+                return redirect('/admin-panel/variants')
+        else:
+            form = TagUpdationForm(instance=tag)
+            context={
+                'form':form,
+                'admin':admin,
+                }
+            return render(request,'admin_panel/add_tag.html',context)
+    else:
+        return redirect('/admin-panel/login')
 def tag_delete(request,uid):
-    Tags.objects.get(uid=uid).delete()
-    messages.success(request,"tag Deleted !!")
-    return redirect('/admin-panel/variants')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        Tags.objects.get(uid=uid).delete()
+        messages.success(request,"tag Deleted !!")
+        return redirect('/admin-panel/variants')
+    else:
+        return redirect('/admin-panel/login')
 # 
 
 #_____________________________________________sections and sub-sections_____________________________
@@ -666,88 +715,103 @@ def Sections_details(request):
         return redirect('/admin-panel/login')
 
 def add_sections(request):
-    admin=User.objects.get(is_superuser=True)
+    if request.user.is_authenticated and  request.user.is_superuser:
+        admin=User.objects.get(is_superuser=True)
 
-    if request.method == 'POST':
-        form = SectionUpdateForm(request.POST,request.FILES)
+        if request.method == 'POST':
+            form = SectionUpdateForm(request.POST,request.FILES)
 
-        if form.is_valid() :
-            form.save()    
-            return redirect('/admin-panel/sections')
+            if form.is_valid() :
+                form.save()    
+                return redirect('/admin-panel/sections')
+            else:
+                print('form not valid')
         else:
-            print('form not valid')
-    else:
-        form = SectionUpdateForm()
-    context= {
-            'form':form,
-            'admin':admin, 
-            }
-    return render(request,'admin_panel/add_section.html',context)
-
-def section_update(request,uid):
-    section=Section.objects.get(uid=uid)
-    admin=User.objects.get(is_superuser=True)
-
-    if request.method == 'POST':
-        form = SectionUpdateForm(request.POST, request.FILES, instance=section)
-        if form.is_valid():
-            form.save()
-            return redirect('/admin-panel/sections')
-    else:
-        form = SectionUpdateForm(instance=section)
-        context={
-            'form':form,
-            'admin':admin,
-            'image_form':form,
-            }
+            form = SectionUpdateForm()
+        context= {
+                'form':form,
+                'admin':admin, 
+                }
         return render(request,'admin_panel/add_section.html',context)
+    else:
+        return redirect('/admin-panel/login')
+def section_update(request,uid):
+    if request.user.is_authenticated and  request.user.is_superuser:
+        section=Section.objects.get(uid=uid)
+        admin=User.objects.get(is_superuser=True)
 
+        if request.method == 'POST':
+            form = SectionUpdateForm(request.POST, request.FILES, instance=section)
+            if form.is_valid():
+                form.save()
+                return redirect('/admin-panel/sections')
+        else:
+            form = SectionUpdateForm(instance=section)
+            context={
+                'form':form,
+                'admin':admin,
+                'image_form':form,
+                }
+            return render(request,'admin_panel/add_section.html',context)
+    else:
+        return redirect('/admin-panel/login')
 def section_delete(request,uid):
-    Section.objects.get(uid=uid).delete()
-    messages.success(request,"Section Deleted !!")
-    return redirect('/admin-panel/sections')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        Section.objects.get(uid=uid).delete()
+        messages.success(request,"Section Deleted !!")
+        return redirect('/admin-panel/sections')
+    else:
+        return redirect('/admin-panel/login')
 # ___________________________________________________________________________///////////////////
 def add_subsections(request):
-    admin=User.objects.get(is_superuser=True)
+    if request.user.is_authenticated and  request.user.is_superuser:
+        admin=User.objects.get(is_superuser=True)
 
-    if request.method == 'POST':
-        form = SubsectionUpdateForm(request.POST,request.FILES)
+        if request.method == 'POST':
+            form = SubsectionUpdateForm(request.POST,request.FILES)
 
-        if form.is_valid() :
-            form.save()    
-            return redirect('/admin-panel/sections')
+            if form.is_valid() :
+                form.save()    
+                return redirect('/admin-panel/sections')
+            else:
+                print('form not valid')
         else:
-            print('form not valid')
-    else:
-        form = SubsectionUpdateForm()
-    context= {
-            'form':form,
-            'admin':admin, 
-            }
-    return render(request,'admin_panel/add_subsection.html',context)
-
-def subsection_update(request,uid):
-    subsection=Sub_groups.objects.get(uid=uid)
-    admin=User.objects.get(is_superuser=True)
-
-    if request.method == 'POST':
-        form = SubsectionUpdateForm(request.POST, request.FILES, instance=subsection)
-        if form.is_valid():
-            form.save()
-            return redirect('/admin-panel/sections')
-    else:
-        form = SubsectionUpdateForm(instance=subsection)
-        context={
-            'form':form,
-            'admin':admin,
-            'image_form':form,
-            }
+            form = SubsectionUpdateForm()
+        context= {
+                'form':form,
+                'admin':admin, 
+                }
         return render(request,'admin_panel/add_subsection.html',context)
+    else:
+        return redirect('/admin-panel/login')
+def subsection_update(request,uid):
+    if request.user.is_authenticated and  request.user.is_superuser:
+        subsection=Sub_groups.objects.get(uid=uid)
+        admin=User.objects.get(is_superuser=True)
+
+        if request.method == 'POST':
+            form = SubsectionUpdateForm(request.POST, request.FILES, instance=subsection)
+            if form.is_valid():
+                form.save()
+                return redirect('/admin-panel/sections')
+        else:
+            form = SubsectionUpdateForm(instance=subsection)
+            context={
+                'form':form,
+                'admin':admin,
+                'image_form':form,
+                }
+            return render(request,'admin_panel/add_subsection.html',context)
+    else:
+        return redirect('/admin-panel/login')
 
 def subsection_delete(request,uid):
-    Sub_groups.objects.get(uid=uid).delete()
-    messages.success(request,"Sub-section Deleted !!")
-    return redirect('/admin-panel/sections')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        Sub_groups.objects.get(uid=uid).delete()
+        messages.success(request,"Sub-section Deleted !!")
+        return redirect('/admin-panel/sections')
+    else:
+        return redirect('/admin-panel/login')
 #__________________________Categories_____________________________________
 
 def Category_details(request):
@@ -777,49 +841,56 @@ def Category_details(request):
         return redirect('/admin-panel/login')
 
 def add_category(request):
-    admin=User.objects.get(is_superuser=True)
+    if request.user.is_authenticated and  request.user.is_superuser:
+        admin=User.objects.get(is_superuser=True)
 
-    if request.method == 'POST':
-        form = CategoryUpdateForm(request.POST,request.FILES)
+        if request.method == 'POST':
+            form = CategoryUpdateForm(request.POST,request.FILES)
 
-        if form.is_valid() :
-            form.save()    
-            return redirect('/admin-panel/categories')
+            if form.is_valid() :
+                form.save()    
+                return redirect('/admin-panel/categories')
+            else:
+                print('form not valid')
         else:
-            print('form not valid')
+            form = CategoryUpdateForm()
+        context= {
+                'form':form,
+                'admin':admin, 
+                }
+        return render(request,'admin_panel/add_category.html',context)
     else:
-        form = CategoryUpdateForm()
-    context= {
-            'form':form,
-            'admin':admin, 
-            }
-    return render(request,'admin_panel/add_category.html',context)
-
+        return redirect('/admin-panel/login')
 def category_update(request,uid):
-    categories=Category.objects.get(uid=uid)
-    admin=User.objects.get(is_superuser=True)
+    if request.user.is_authenticated and  request.user.is_superuser:
+        categories=Category.objects.get(uid=uid)
+        admin=User.objects.get(is_superuser=True)
 
-    if request.method == 'POST':
-        form = CategoryUpdateForm(request.POST,request.FILES, instance=categories)
-        
-        if form.is_valid():
-            form.save()
+        if request.method == 'POST':
+            form = CategoryUpdateForm(request.POST,request.FILES, instance=categories)
             
-            return redirect('/admin-panel/categories')
+            if form.is_valid():
+                form.save()
+                
+                return redirect('/admin-panel/categories')
+        else:
+            form = CategoryUpdateForm(instance=categories)
+            context={
+                'form':form,
+                'admin':admin,
+                'image_form':form
+                }
+        
+        return render(request,'admin_panel/add_category.html',context)
     else:
-        form = CategoryUpdateForm(instance=categories)
-        context={
-            'form':form,
-            'admin':admin,
-            'image_form':form
-            }
-    
-    return render(request,'admin_panel/add_category.html',context)
-
+        return redirect('/admin-panel/login')
 def Category_delete(request,uid):
-    Category.objects.get(uid=uid).delete()
-    messages.success(request,"Category Deleted !!")
-    return redirect('/admin-panel/categories')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        Category.objects.get(uid=uid).delete()
+        messages.success(request,"Category Deleted !!")
+        return redirect('/admin-panel/categories')
+    else:
+        return redirect('/admin-panel/login')
 
 #____________________________________Orders___________________________________________
 
@@ -846,23 +917,25 @@ def view_all_orders(request):
     else:
         return redirect('/admin-panel/logout')
 def update_order(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        order_uid = data.get('orderUId')
-        delivery_date = data.get('deliveryDate')
-        status = data.get('status')
-       
-        try:
-            order = Order.objects.get(uid=order_uid)
-            order.delivery_date = delivery_date
-            order.status = status
-            order.save()
-            return JsonResponse('order updated',safe=False)
-        except Order.DoesNotExist:
-            return JsonResponse({'success': False, 'message': f'Order with UId {order_uid} not found'})
+    if request.user.is_authenticated and  request.user.is_superuser:
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            order_uid = data.get('orderUId')
+            delivery_date = data.get('deliveryDate')
+            status = data.get('status')
+        
+            try:
+                order = Order.objects.get(uid=order_uid)
+                order.delivery_date = delivery_date
+                order.status = status
+                order.save()
+                return JsonResponse('order updated',safe=False)
+            except Order.DoesNotExist:
+                return JsonResponse({'success': False, 'message': f'Order with UId {order_uid} not found'})
+        else:
+            return JsonResponse({'success': False, 'message': 'Invalid request method'})
     else:
-        return JsonResponse({'success': False, 'message': 'Invalid request method'})
-
+        return redirect('/admin-panel/logout')
 def view_order_details(request,uid):
     if request.user.is_authenticated and request.user.is_superuser:
         context={}
@@ -920,34 +993,39 @@ def Coupon_details(request):
         return redirect('/admin-panel/login')
 
 def coupon_delete(request,uid):
-    Coupon.objects.get(uid=uid).delete()
-    messages.success(request,"Coupon Deleted !!")
-    return redirect('/admin-panel/coupons')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        Coupon.objects.get(uid=uid).delete()
+        messages.success(request,"Coupon Deleted !!")
+        return redirect('/admin-panel/coupons')
+    else:
+        return redirect('/admin-panel/login')
 
 def update_coupon(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        couponuid = data.get('couponuid')
-        couponCode = data.get('couponCode')
-        description = data.get('description')
-        discountPrice = data.get('discountPrice')
-        minimumAmount = data.get('minimumAmount')
-        isExpired = data.get('isExpired')
-       
-        try:
-            coupon = Coupon.objects.get(uid=couponuid)
-            coupon.coupon_code=couponCode
-            coupon.description=description
-            coupon.discount_price=discountPrice
-            coupon.minimum_amount=minimumAmount
-            coupon.is_expired=isExpired
-            coupon.save()
-            return JsonResponse('coupon updated',safe=False)
-        except Order.DoesNotExist:
-            return JsonResponse({'success': False, 'message': f'{couponCode} not found'})
+    if request.user.is_authenticated and  request.user.is_superuser:
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            couponuid = data.get('couponuid')
+            couponCode = data.get('couponCode')
+            description = data.get('description')
+            discountPrice = data.get('discountPrice')
+            minimumAmount = data.get('minimumAmount')
+            isExpired = data.get('isExpired')
+        
+            try:
+                coupon = Coupon.objects.get(uid=couponuid)
+                coupon.coupon_code=couponCode
+                coupon.description=description
+                coupon.discount_price=discountPrice
+                coupon.minimum_amount=minimumAmount
+                coupon.is_expired=isExpired
+                coupon.save()
+                return JsonResponse('coupon updated',safe=False)
+            except Order.DoesNotExist:
+                return JsonResponse({'success': False, 'message': f'{couponCode} not found'})
+        else:
+            return JsonResponse({'success': False, 'message': 'Invalid request method'})
     else:
-        return JsonResponse({'success': False, 'message': 'Invalid request method'})
-    
+        return redirect('/admin-panel/login')
 # ______________________________________admin_profile_________________________________________________
 def admin_profile(request):
     if request.user.is_authenticated and request.user.is_superuser:
@@ -971,14 +1049,16 @@ def admin_profile(request):
         return redirect('/admin-panel/login')
 
 def update_admin_profile(request):
-    if request.method == 'POST':
-        image = request.FILES.get('image')
-        if image:
-            request.user.image = image
-            request.user.save()
-            return JsonResponse({'image': request.user.image.url})
-    return JsonResponse({'error': 'Invalid request'})
-
+    if request.user.is_authenticated and  request.user.is_superuser:
+        if request.method == 'POST':
+            image = request.FILES.get('image')
+            if image:
+                request.user.image = image
+                request.user.save()
+                return JsonResponse({'image': request.user.image.url})
+        return JsonResponse({'error': 'Invalid request'})
+    else:
+        return redirect('/admin-panel/login')
 def View_BankDetails(request):
     if request.user.is_authenticated and request.user.is_superuser:
         admin=request.user
@@ -1036,9 +1116,12 @@ def edit_account_details(request,uid):
 
 
 def delete_account(request,uid):
-    Admin_Bank_Details.objects.get(uid=uid).delete()
-    messages.success(request,"Account Deleted !!")
-    return redirect('/admin-panel/admin-bank-details')
+    if request.user.is_authenticated and request.user.is_superuser:
+        Admin_Bank_Details.objects.get(uid=uid).delete()
+        messages.success(request,"Account Deleted !!")
+        return redirect('/admin-panel/admin-bank-details')
+    else:
+        return redirect('/admin-panel/login')
 
 def security(request):
     if request.user.is_authenticated and request.user.is_superuser:
@@ -1072,38 +1155,41 @@ def security(request):
 
 #______________________________________sales Report_________________________________
 def sales_report(request):
-    admin=request.user
-    orders_list=Order.objects.filter(complete=True).order_by('-date_ordered')
-    from_date=request.GET.get('from_date')
-    to_date=request.GET.get('to_date')
-    if from_date and to_date:
-        orders_list = orders_list.filter(date_ordered__gte=from_date, date_ordered__lte=to_date)
-    paginator = Paginator(orders_list, 10) 
-    page = request.GET.get('page')
-    orders = paginator.get_page(page)
-    total_orders=orders_list.count()
-    net_income=0
-    net_cart=0
-    income_orderlist=orders_list.exclude(status__in=['returned', 'canceled', 'refunded'])
-    for order in income_orderlist:
-        net_cart+=order.get_original_cart_total
-        net_income+=order.get_grand_total
-    net_discount=net_cart-net_income
-    deliveries=orders_list.filter(status='delivered').count()
-    canceled=orders_list.filter(Q(status='canceled') | Q(status='returned')).count()
-    pending=orders_list.filter(status='pending').count()
-    context={
-        'admin':admin,
-        'orders':orders,
-        'total_orders':total_orders,
-        'net_income':net_income,
-        'net_discount':net_discount,
-        'net_cart':net_cart,
-        'deliveries':deliveries,
-        'canceled':canceled,
-        'pending':pending,
-    }
-    return render(request,'admin_panel/salesreport.html',context) 
+    if request.user.is_authenticated and request.user.is_superuser:
+        admin=request.user
+        orders_list=Order.objects.filter(complete=True).order_by('-date_ordered')
+        from_date=request.GET.get('from_date')
+        to_date=request.GET.get('to_date')
+        if from_date and to_date:
+            orders_list = orders_list.filter(date_ordered__gte=from_date, date_ordered__lte=to_date)
+        paginator = Paginator(orders_list, 10) 
+        page = request.GET.get('page')
+        orders = paginator.get_page(page)
+        total_orders=orders_list.count()
+        net_income=0
+        net_cart=0
+        income_orderlist=orders_list.exclude(status__in=['returned', 'canceled', 'refunded'])
+        for order in income_orderlist:
+            net_cart+=order.get_original_cart_total
+            net_income+=order.get_grand_total
+        net_discount=net_cart-net_income
+        deliveries=orders_list.filter(status='delivered').count()
+        canceled=orders_list.filter(Q(status='canceled') | Q(status='returned')).count()
+        pending=orders_list.filter(status='pending').count()
+        context={
+            'admin':admin,
+            'orders':orders,
+            'total_orders':total_orders,
+            'net_income':net_income,
+            'net_discount':net_discount,
+            'net_cart':net_cart,
+            'deliveries':deliveries,
+            'canceled':canceled,
+            'pending':pending,
+        }
+        return render(request,'admin_panel/salesreport.html',context) 
+    else:
+        return redirect('/admin-panel/login')
 
 
 # -------------------------------------------------------------------------------------------
@@ -1175,28 +1261,34 @@ def Offer_details(request):
         return redirect('/admin-panel/login')
 
 def offer_delete(request,uid):
-    Offer.objects.get(uid=uid).delete()
-    messages.success(request,"Offer Deleted !!")
-    return redirect('/admin-panel/offers')
+    if request.user.is_authenticated and  request.user.is_superuser:
+        Offer.objects.get(uid=uid).delete()
+        messages.success(request,"Offer Deleted !!")
+        return redirect('/admin-panel/offers')
+    else:
+        return redirect('/admin-panel/login')
+
 
 def update_offer(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        offeruid = data.get('offeruid')
-        offername = data.get('offername')
-        discount = data.get('discount')
-        status = data.get('active')
-       
-        try:
-            offer = Offer.objects.get(uid=offeruid)
-            offer.name=offername
-            offer.discount=discount
-            offer.active=status
-            offer.save()
-            return JsonResponse('offer updated',safe=False)
-        except Order.DoesNotExist:
-            return JsonResponse({'success': False, 'message': f'{offername} not found'})
+    if request.user.is_authenticated and  request.user.is_superuser:
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            offeruid = data.get('offeruid')
+            offername = data.get('offername')
+            discount = data.get('discount')
+            status = data.get('active')
+        
+            try:
+                offer = Offer.objects.get(uid=offeruid)
+                offer.name=offername
+                offer.discount=discount
+                offer.active=status
+                offer.save()
+                return JsonResponse('offer updated',safe=False)
+            except Order.DoesNotExist:
+                return JsonResponse({'success': False, 'message': f'{offername} not found'})
+        else:
+            return JsonResponse({'success': False, 'message': 'Invalid request method'})
     else:
-        return JsonResponse({'success': False, 'message': 'Invalid request method'})
-    
+        return redirect('/admin-panel/login')
 # _
