@@ -302,7 +302,7 @@ def Customer_delete(request,id):
         return redirect('/admin-panel/login')
         
 def customer_update(request,id):
-    if user.is_authenticated and request.user.is_superuser:
+    if request.user.is_authenticated and request.user.is_superuser:
         user=User.objects.get(id=id)
         admin=User.objects.get(is_superuser=True)
         if request.method == 'POST':
